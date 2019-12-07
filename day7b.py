@@ -104,7 +104,7 @@ print(program)
 
 
 def test():
-    processor = Processor(program, queue.Queue(), queue.Queue())
+    processor = Processor(0, program, queue.Queue(), queue.Queue())
     processor.input_queue.put(5)
     processor.run()
     while not processor.output_queue.empty():
