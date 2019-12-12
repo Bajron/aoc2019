@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+import math
+
 from  collections import namedtuple
 Moon = namedtuple('Moon',['x','y','z'])
 
@@ -66,24 +68,45 @@ def applyTensorChange(velocity, gravity):
         velocity[i] = add(velocity[i], gravity[i])
     return velocity
 
-# moons = test_moons
+# moons = test_moons_big
 moons = [list(m) for m in moons]
 velocity = [[0,0,0]] * len(moons)
 
-i = 0
-while True:
-    gravity = calculateGravity(moons)
-    velocity = applyTensorChange(velocity, gravity)
-    moons = applyTensorChange(moons, velocity)
-    i += 1
-    all0 = 0
-    for k in range(len(velocity)):
-        for c in range(3):
-            if velocity[k][c] == 0:
-                all0 += 1
-    if all0 == 12:
-        break
-
+def processCoordinates(coord):
+    v = [0]*len(coord)
+    initial = coord.copy()
+    iteration = 0
+    while True:
+        g = [0] * len(coord)
+        for i in range(len(coord)):
+            for j in range(i+1, len(coord)):
+                s = signum(coord[j] - coord[i])
+                g[i] = g[i] + s
+                g[j] = g[j] - s
+        for i in range(len(coord)):
+            v[i] = v[i] + g[i]
+            coord[i] = coord[i] + v[i]
+        iteration += 1
+        cycled = True
+        for i in range(len(coord)):
+            if coord[i] != initial[i] or v[i] != 0:
+                cycled = False
+                break
+        if cycled:
+            break
+        
+    return iteration
 
 # each coordinate separately?
-print('I:', i, i*2)
+x = processCoordinates([c[0] for c in moons])
+y = processCoordinates([c[1] for c in moons])
+z = processCoordinates([c[2] for c in moons])
+print('x:', x)
+print('y:', y)
+print('z:', z)
+
+def lcm(a, b):
+    return abs(a*b) // math.gcd(a, b)
+
+print(lcm(lcm(x,y), z))
+
