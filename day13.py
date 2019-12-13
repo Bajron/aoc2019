@@ -5,19 +5,12 @@ import queue
 import itertools
 import threading
 
-inputString = sys.stdin.read()
-program = [int(x) for x in inputString.split(',')]
-
 class Setter():
     def __init__(self, program, index):
         self.program = program
         self.index = index
 
     def set(self, value):
-        # if self.index == 387:
-        #     print('!!!! 387 setting', value)
-        #     if value == 0:
-        #         value = 1
         self.program[self.index] = value
 
 
@@ -151,80 +144,70 @@ def toChar(i):
     if i == 3: return '='
     if i == 4: return 'O'
 
-print(program)
-screen = [[-1] * 40 for _ in range(22)]
-program[0] = 2
-processor = Processor(0, program, queue.Queue(), queue.Queue())
-score = 0
+class Game():
+    def __init__(self, program):
+        self.screen = [[-1] * 40 for _ in range(22)]
+        program[0] = 2
+        self.processor = Processor(0, program, queue.Queue(), queue.Queue())
+        self.processor.input_provider = self.moveJoystick
+        self.processor.output_handler = self.updateScreen
+        self.score = 0
 
-# processor.run()
-prevBall = None
-ball, paddle = None, None
+        self.prevBall = None
+        self.ball = None
+        self.paddle = None
 
-def moveJoystick():
-    global prevBall, ball, paddle
-    
-    if ball and paddle:
-        # if prevBall and ball:
-        #     ballDiff = (ball[0] - prevBall[0], ball[1] - prevBall[1])
-        #     nextBall = (ball[0] + ballDiff[0], ball[1] + ballDiff[1])
-        #     print('Predictive')
-        #     return signum(nextBall[1] - paddle[1])
-        print('Normal')
-        return signum(ball[1] - paddle[1])
-    else:
-        return 0
+        self.reading = 0
+        self.x, self.y, self.t = None, None, None
 
-reading = 0
-x, y, t = None, None, None
-def updateScreen(input):
-    global reading, score, prevBall, ball, paddle, x, y, screen
-    if reading == 0:
-        reading += 1
-        x = input
-        return
-    if reading == 1:
-        reading += 1
-        y = input
-        return
-    
-    reading = 0
-    t = input
+    def moveJoystick(self):
+        if self.ball and self.paddle:
+            # if prevBall and ball:
+            #     ballDiff = (ball[0] - prevBall[0], ball[1] - prevBall[1])
+            #     nextBall = (ball[0] + ballDiff[0], ball[1] + ballDiff[1])
+            #     print('Predictive')
+            #     return signum(nextBall[1] - paddle[1])
+            print('Normal')
+            return signum(self.ball[1] - self.paddle[1])
+        else:
+            return 0
 
-    if t == 4:
-        prevBall = ball
-        ball = (y,x)
 
-    if t == 3:
-        paddle = (y,x)
+    def updateScreen(self, input):
+        if self.reading == 0:
+            self.reading += 1
+            self.x = input
+            return
+        if self.reading == 1:
+            self.reading += 1
+            self.y = input
+            return
+        
+        self.reading = 0
 
-    if x == -1 and y == 0:
-        score = t
-        print('Score',score, ' ball ', ball)
-        for row in screen: print(''.join(map(toChar, row)))
-    else:
-        screen[y][x] = t
-    
+        x, y, t = self.x, self.y, input
 
-processor.input_provider = moveJoystick
-processor.output_handler = updateScreen
+        if t == 4:
+            self.prevBall = self.ball
+            self.ball = (y, x)
 
-# t = threading.Thread(target=processor.run)
-# t.start()
+        if t == 3:
+            self.paddle = (y, x)
 
-processor.run()
-for row in screen: print(''.join(map(toChar, row)))
+        if x == -1 and y == 0:
+            self.score = t
+            print('Score', self.score, ' ball ', self.ball)
+            for row in self.screen: print(''.join(map(toChar, row)))
+        else:
+            self.screen[y][x] = t
 
-# while True:
-#     processor.run()
-#     for row in screen: print(''.join(map(toChar, row)))
+    def run(self):
+        self.processor.run()    
 
-#     run = False
-#     for row in screen:
-#         if 2 in row:
-#             run = True
-#             break
-#     if not run:
-#         break
-# print ('loop stoped')
-# for row in screen: print(''.join(map(toChar, row)))
+
+inputString = sys.stdin.read()
+inputProgram = [int(x) for x in inputString.split(',')]
+
+game = Game(inputProgram)
+game.run()
+print("Score", game.score)
