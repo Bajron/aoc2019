@@ -79,9 +79,9 @@ class Processor():
         if last_is_to_set:
             m = get_mode(opcode, count)
             if m == 0:
-                p = program[self.ip + count + 1]
+                p = self.program[self.ip + count + 1]
             elif m == 2:
-                p = program[self.ip + count + 1] + self.relative
+                p = self.program[self.ip + count + 1] + self.relative
             values[-1] = Setter(self.program, p)
         
         return tuple(values)
@@ -164,13 +164,13 @@ ball, paddle = None, None
 def moveJoystick():
     global prevBall, ball, paddle
     
-    #for row in screen: print(''.join(map(toChar, row)))
-
     if ball and paddle:
-        if prevBall and ball:
-            ballDiff = (ball[0] - prevBall[0], ball[1] - prevBall[1])
-            nextBall = (ball[0] + ballDiff[0], ball[1] + ballDiff[1])
-            return signum(nextBall[1] - paddle[1])
+        # if prevBall and ball:
+        #     ballDiff = (ball[0] - prevBall[0], ball[1] - prevBall[1])
+        #     nextBall = (ball[0] + ballDiff[0], ball[1] + ballDiff[1])
+        #     print('Predictive')
+        #     return signum(nextBall[1] - paddle[1])
+        print('Normal')
         return signum(ball[1] - paddle[1])
     else:
         return 0
@@ -178,7 +178,7 @@ def moveJoystick():
 reading = 0
 x, y, t = None, None, None
 def updateScreen(input):
-    global reading, score, prevBall, ball, paddle, x, y
+    global reading, score, prevBall, ball, paddle, x, y, screen
     if reading == 0:
         reading += 1
         x = input
@@ -194,10 +194,7 @@ def updateScreen(input):
     if t == 4:
         prevBall = ball
         ball = (y,x)
-        #print('Ball', prevBall, '->', ball)
-        if prevBall and ball and (abs(prevBall[0] - ball[0]) > 1 or abs(prevBall[1] - ball[1]) > 1):
-            print('bad ball')
-            sys.exit(0)
+
     if t == 3:
         paddle = (y,x)
 
