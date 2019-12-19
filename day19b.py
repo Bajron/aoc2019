@@ -244,8 +244,8 @@ print ('X should be ', lastX - 99)
 print ('Result code', 10000*(lastX - 99) + y)
 
 print('Starting at y', refinedY-10)
-print('x starts at', 800)
+print('x starts at', 700)
 for y in range(refinedY - 10, refinedY + 110):
-    line = getLine2(y, 800, 1100)
+    line = getLine2(y, 700, 1100)
     print(''.join(str(x) for x in line))
 
