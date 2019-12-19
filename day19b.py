@@ -155,7 +155,7 @@ def getFirstLastX(y):
 
     while getPoint(x, y)  != 0:
         x += 1
-    lastX = x
+    lastX = x -1
 
     return firstX, lastX
 
@@ -234,6 +234,7 @@ while True:
 
 # not 843 1088
 # not 836 1079 too low
+# eyeballing: 8381080 too low
 print ('Refined to y', y)
 refinedY = y
 firstX, lastX = getFirstLastX(y)
