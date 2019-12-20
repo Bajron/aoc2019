@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import sys
-from collections import namedtuple
+from collections import namedtuple, defaultdict
 
 State=namedtuple('State', ['position', 'cost', 'code'])
 
@@ -9,17 +9,26 @@ room = [l.strip() for l in sys.stdin.readlines()]
 H = len(room)
 W = len(room[0])
 
+keys = ''.join([chr(x) for x in range(ord('a'), ord('z') + 1)])
+realKeys = []
+doors = keys.upper()
+realDoors = []
+
 for y in range(H):
     for x in range(W):
-        if room[y][x] == '@':
+        ch = room[y][x]
+        if ch == '@':
             start = (y,x)
-            break
+        elif ch in keys:
+            realKeys.append(ch)
+        elif ch in doors:
+            realDoors.append(ch)
 
-initial = State(start, 0, '')
+initial = State(start, 0, '@')
 print(initial)
 
-keys = ''.join([chr(x) for x in range(ord('a'), ord('z') + 1)])
-doors = keys.upper()
+def allKeysGathered(code):
+    return all([ch in code for ch in realKeys])
 
 def neigbors(pos):
     y,x = pos
@@ -66,9 +75,38 @@ prevStateCount = 0
 states = [initial]
 finalStates = []
 
+bestAllKeys = 1000000000
+bestAllKeysState = None
+
 # while prevStateCount != len(states):
 while len(states) > 0:
     print('States count', len(states))
+    groups = defaultdict(lambda:[])
+    for s in states:
+        # same point, with same state so far
+        l = list(s.code[:-1])
+        l.sort()
+        same = ''.join(l) + s.code[-1]
+        groups[same].append(s)
+
+        if allKeysGathered(s.code):
+            if s.cost < bestAllKeys:
+                bestAllKeys = s.cost
+                bestAllKeysState = s
+
+    states = []
+    for k,v in groups.items():
+        bestCost = 1000000000000
+        best = None
+        for s in v:
+            if s.cost < bestCost:
+                bestCost = s.cost
+                best = s
+        states.append(best)
+
+    print('Filtered count', len(states))
+    sys.stdout.flush()
+
     prevStateCount = len(states)
     nextStates = []
     for s in states:
@@ -80,6 +118,8 @@ while len(states) > 0:
     states = nextStates
 
 
+# not 6039
+
 lowestCost = 1000000000000
 bestState = None
 for s in finalStates:
@@ -89,3 +129,6 @@ for s in finalStates:
 
 print(bestState)
 print(bestState.code)
+
+print(bestAllKeys)
+print(bestAllKeysState)
