@@ -5,6 +5,21 @@ import queue
 import itertools
 import threading
 
+def putLine(q, line):
+    for i in [ord(ch) for ch in line]:
+        q.put(i)
+    q.put(10)
+    print('Line entered', line)
+    sys.stdout.flush()
+
+def readLine(q):
+    #print('Reading line')
+    data = []
+    while True:
+        ch = q.get(timeout=4)
+        if ch == 10: break
+        data.append(ch)
+    print(''.join(chr(x) for x in data))
 
 class Setter():
     def __init__(self, program, index):
@@ -34,11 +49,11 @@ class Processor():
             ret = self.input_provider()
         else:
             ret = self.input_queue.get()
-        print (self.id, 'INPUT:', ret)
+        #print (self.id, 'INPUT:', ret)
         return ret
 
     def put_output(self, v):
-        print (self.id, 'OUTPUT:', v)
+        #print (self.id, 'OUTPUT:', v)
         if self.output_handler:
             self.output_handler(v)
         else:
@@ -163,8 +178,13 @@ W = len(lines[0])
 def isScaffolding(ch):
     return ch in '#^<>v'
 
+def isRobot(ch):
+    return ch in '^<>v'
+
 NORTH, SOUTH, EAST, WEST = 0,1,2,3
 
+robotDir = None
+robotPos = None 
 intersections = []
 for y in range(H):
     for x in range(W):
@@ -181,9 +201,157 @@ for y in range(H):
             
             if sum(dirs) > 2:
                 intersections.append((y,x))
+        if isRobot(lines[y][x]):
+            robotPos = (y,x)
+            robotDir = lines[y][x]
 
-s = 0
-for y,x in intersections:
-    s += y*x
 
-print('Sum y*x', s)
+def next(pos, dir):
+    y,x = pos
+    if dir == '^': return (y-1, x)
+    if dir == '<': return (y, x-1)
+    if dir == '>': return (y, x+1)
+    if dir == 'v': return (y+1, x)
+
+def turnLeft(dir):
+    if dir == '^': return '<'
+    if dir == '<': return 'v'
+    if dir == '>': return '^'
+    if dir == 'v': return '>'
+
+def turnRight(dir):
+    if dir == '^': return '>'
+    if dir == '<': return '^'
+    if dir == '>': return 'v'
+    if dir == 'v': return '<'
+
+def posInBound(pos):
+    y,x = pos
+    return 0 <= y and y < H and 0 <= x and x < W
+
+visitedIntersection = {}
+intersectionSet = set()
+for i in intersections:
+    visitedIntersection[i] = 0
+    intersectionSet.add(i)
+
+print ('Intersections', len(intersections))
+#sys.exit(0)
+
+paths = []
+def sillyMove(pathIn, dir, pos, count):
+    path = pathIn.copy()
+
+    # look around on intersections
+    if False and pos in intersectionSet:
+        if visitedIntersection[pos] == 2:
+            #print('loop, backtrack', path)
+            return
+        visitedIntersection[pos] = visitedIntersection[pos] + 1
+        left = turnLeft(dir)
+        sillyMove(path + [str(count), 'L'], left, next(pos, left), 1)
+
+        right = turnRight(dir)
+        sillyMove(path + [str(count), 'R'], right, next(pos, right), 1)
+         
+        visitedIntersection[pos] = visitedIntersection[pos] - 1
+    
+    forward = next(pos, dir)
+    fy, fx = forward
+    
+    if posInBound(forward) and lines[fy][fx] == '#':
+        sillyMove(path, dir, forward, count + 1)
+    
+    else:
+        if count > 0:
+            path.append(str(count))
+            count = 0
+        # can only turn left or righ
+
+        left = turnLeft(dir)
+        leftCheck = next(pos, left)
+        ly,lx = leftCheck
+        if posInBound(leftCheck) and lines[ly][lx] == '#':
+            path.append('L')
+            return sillyMove(path, left, pos, count)
+        
+        right = turnRight(dir)
+        rightCheck = next(pos, right)
+        ry, rx = rightCheck
+        if posInBound(rightCheck) and lines[ry][rx] == '#':
+            path.append('R')
+            return sillyMove(path, right, pos, count)
+        
+        # or that's the dead end
+        paths.append(path)
+        print('Found path', path)
+        sys.stdout.flush()
+        return
+
+sillyMove([], robotDir, robotPos, 0)
+print('Found paths:', len(paths))
+
+def findall(haystack, needle):
+    finds = []
+    i = haystack.find(needle)
+    while i >= 0:
+        finds.append(i)
+        i = haystack.find(needle, i + len(needle))
+    return finds
+
+pp = ','.join(paths[0])
+ppOriginal = pp
+print('Path lenght', len(paths[0]))
+print(pp)
+funcs = {}
+
+for f in ['A', 'B', 'C']:
+    print ('Processed path', pp)
+    commas = 1
+    comma = pp.index(',')
+    comma = pp.index(',', comma+1)
+
+    matchString = pp[:comma]
+    bestReduce = len(pp.replace(pp[:comma], ''))
+    bestReduceComma = comma
+    while commas < 20:
+        comma = pp.find(',', comma+1)
+        if comma < 0:
+            break
+        commas += 1
+        
+    comma = bestReduceComma
+    print('Best reduce', pp[:comma])
+    if pp[comma - 1] in 'RL':
+        comma -= 2
+
+    print(f, pp[:comma])
+    funcs[f] = pp[:comma]
+    pp = pp.replace(pp[:comma], f)
+
+pp = ppOriginal
+for f in ['A', 'B', 'C']:
+    print('replacing', f, funcs[f])
+    pp = pp.replace(funcs[f], f)
+    print(pp)
+
+print('After processing =', pp)
+
+cleaningProgram = inputProgram.copy()
+cleaningProgram[0] = 2
+
+inQ = queue.Queue()
+outQ = queue.Queue()
+
+vm = Processor(1, cleaningProgram, inQ, outQ)
+vmt = threading.Thread(target=vm.run)
+vmt.start()
+
+putLine(inQ, pp)
+putLine(inQ, funcs['A'])
+putLine(inQ, funcs['B'])
+putLine(inQ, funcs['C'])
+putLine(inQ, 'n')
+
+while vm.running or not outQ.empty():
+    readLine(outQ)
