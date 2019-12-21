@@ -4,6 +4,7 @@ import sys
 import queue
 import itertools
 import threading
+import copy
 
 def putLine(q, line):
     for i in [ord(ch) for ch in line]:
@@ -17,6 +18,9 @@ def readLine(q):
     data = []
     while True:
         ch = q.get(timeout=4)
+        if ch > 255:
+            print('\nNon ASCII output', ch, '\n')
+            continue
         if ch == 10: break
         data.append(ch)
     print(''.join(chr(x) for x in data))
@@ -305,31 +309,32 @@ print('Path lenght', len(paths[0]))
 print(pp)
 funcs = {}
 
-for f in ['A', 'B', 'C']:
-    print ('Processed path', pp)
-    commas = 1
+foundSets = []
+def recursiveReduce(pp, funcSet, depth=0):
+    if depth == 3:
+        if len(pp) == 0:
+            foundSets.append(copy.copy(funcSet))
+        return
+    
     comma = pp.index(',')
-    comma = pp.index(',', comma+1)
-
-    matchString = pp[:comma]
-    bestReduce = len(pp.replace(pp[:comma], ''))
-    bestReduceComma = comma
+    comma = pp.index(',', comma + 1)
+    commas = 1
+    
     while commas < 20:
+        funcSet[chr(ord('A') + depth)] = pp[:comma]
+        recursiveReduce(pp.replace(pp[:comma], '').strip(','), funcSet, depth+1)
+        
         comma = pp.find(',', comma+1)
         if comma < 0:
             break
         commas += 1
-        
-    comma = bestReduceComma
-    print('Best reduce', pp[:comma])
-    if pp[comma - 1] in 'RL':
-        comma -= 2
 
-    print(f, pp[:comma])
-    funcs[f] = pp[:comma]
-    pp = pp.replace(pp[:comma], f)
+recursiveReduce(ppOriginal,{})
+print('Found replacement sets', len(foundSets))
+print(foundSets)
 
 pp = ppOriginal
+funcs = foundSets[0]
 for f in ['A', 'B', 'C']:
     print('replacing', f, funcs[f])
     pp = pp.replace(funcs[f], f)
@@ -355,3 +360,5 @@ putLine(inQ, 'n')
 
 while vm.running or not outQ.empty():
     readLine(outQ)
+
+
