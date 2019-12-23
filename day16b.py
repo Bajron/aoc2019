@@ -12,6 +12,28 @@ numbers = [int(x) for x in inputString]*10000
 baseRep = [0,1,0,-1]
 baseRepLen = len(baseRep)
 
+def periodicFunction(j, k):
+    return round(math.cos((math.pi/2) * math.floor(j/(k+1))), 0)
+
+def fixValues(values):
+        n = len(values)
+        need = int(math.ceil(math.log(n, 2))) - n
+        values.extend([0] * need)
+        return values
+
+def calculate(values, upTo):
+    n = len(values)
+    half = n/2
+    even = []
+    for i in range(half-1):
+        k = 2*i
+        s = 0
+        for i in range(n):
+            s += values[i] * periodicFunction(i, k)
+        even.append(math.abs(s) % 10)
+
+
+
 n = len(numbers)
 print('Lenght of input', n)
 print('After offset', n - offset)

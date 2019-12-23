@@ -15,13 +15,13 @@ orders = sys.stdin.readlines()
 shuffleTimes = 101741582076661
 
 size         = 119315717514047
-position = 2019
+position = 2020
 
 # answer from part 1, for 2019
-size = 10007
-position = 4703
+#size = 10007
+# position = 4703
 
-size = 16063   
+#size = 16063   
 
 positionSet = set()
 positionSequence = []
@@ -79,8 +79,8 @@ while position not in positionSet:
 print('Iteration', iteration)
 print(positionSequence)
 
-for i in range(len(positionSequence)):
-    print(positionSequence[i] - positionSequence[(i-1)%len(positionSequence)])
+# for i in range(len(positionSequence)):
+#     print(positionSequence[i] - positionSequence[(i-1)%len(positionSequence)])
 
 print('Cycle length', len(positionSequence))
 print('Original position', position)
