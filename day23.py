@@ -142,6 +142,16 @@ def putLine(q, line):
     print('Line entered', line)
     sys.stdout.flush()
 
+def putLineInteractive(q):
+    line = input(prompt='> ')
+    line.strip()
+    for i in [ord(ch) for ch in line]:
+        q.put(i)
+    q.put(10)
+    print('Line entered', line)
+    sys.stdout.flush()
+
+
 def readLine(q):
     print('Reading line')
     data = []
